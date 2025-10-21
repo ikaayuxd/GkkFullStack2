@@ -1,232 +1,238 @@
-<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <title>Gumasta Krishi Kendra</title>
-    <style>
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #1e3a8a, #3b82f6, #10b981, #f59e0b);
-            color: white;
-            padding: 20px;
-            text-align: center;
-        }
-        #categories button {
-            margin: 5px;
-            padding: 10px 15px;
-            background: yellow;
-            border: none;
-            cursor: pointer;
-            border-radius: 5px;
-            font-weight: bold;
-        }
-        #products {
-            margin-top: 20px;
-            display: grid;
-            grid-template-columns: repeat(auto-fill,minmax(200px,1fr));
-            gap: 15px;
-        }
-        .product {
-            background: white;
-            color: black;
-            padding: 15px;
-            border-radius: 8px;
-            position: relative;
-        }
-        .product button {
-            margin-top: 8px;
-            background: #f59e0b;
-            border: none;
-            padding: 7px 12px;
-            cursor: pointer;
-            border-radius: 4px;
-            font-weight: bold;
-        }
-        .edit-price-btn {
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            background: #f1c40f;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-            padding: 4px 6px;
-        }
-        #cart {
-            margin-top: 30px;
-            background: rgba(255 255 255 / 0.9);
-            color: black;
-            padding: 15px;
-            border-radius: 10px;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        #cart table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        #cart th, #cart td {
-            padding: 10px;
-            border: 1px solid #ddd;
-        }
-        #receipt-btn {
-            margin-top: 10px;
-            padding: 10px 20px;
-            background: #3b82f6;
-            border: none;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-    </style>
-</head>
-<body>
-    <h1>🌾 Gumasta Krishi Kendra</h1>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gumasta Krishi Kendra</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet"/>
+  <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+  <style>
+    body {
+      background: linear-gradient(135deg, #1e3a8a, #3b82f6, #10b981, #f59e0b);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+    }
 
-    <div id="categories">
-        <button data-category="seeds">Seeds</button>
-        <button data-category="fertilizers">Fertilizers</button>
-        <button data-category="herbicides">Herbicides</button>
-        <button data-category="pesticides">Pesticides</button>
-    </div>
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
 
-    <div id="products"></div>
+    .white-border {
+      border: 2px solid white;
+      border-radius: 12px;
+    }
 
-    <div id="cart">
-        <h2>Shopping Cart</h2>
-        <table id="cart-table">
-            <thead>
-                <tr><th>Product</th><th>Price</th><th>Quantity</th><th>Total</th><th>Remove</th></tr>
-            </thead>
-            <tbody></tbody>
-            <tfoot>
-                <tr><th colspan="3" style="text-align:right;">Grand Total:</th><th id="grand-total">₹0</th><th></th></tr>
-            </tfoot>
-        </table>
-        <button id="receipt-btn">Download Receipt</button>
-    </div>
+    .pattern-bg {
+      background: repeating-linear-gradient(
+        45deg,
+        #f3f4f6,
+        #f3f4f6 10px,
+        #e5e7eb 10px,
+        #e5e7eb 20px
+      );
+    }
+  </style>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const productContainer = document.getElementById('product-container');
+      const cartDetailsElement = document.getElementById('cart-details');
+      const cartValueElement = document.getElementById('cart-value');
+      const placeOrderButton = document.getElementById('place-order-button');
+      const clearCartButton = document.getElementById('clear-cart-button');
+      const menuButtons = document.querySelectorAll('.menu-button');
+      let cart = {};
 
-    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
-    <script>
-        const categories = document.querySelectorAll('#categories button');
-        const productsContainer = document.getElementById('products');
-        const cartTableBody = document.querySelector('#cart-table tbody');
-        const grandTotalElem = document.getElementById('grand-total');
-        const receiptBtn = document.getElementById('receipt-btn');
-
-        let products = [];
-        let cart = {};
-
-        // Load products from API for category
-        async function loadProducts(category) {
-            const res = await fetch(`/api/products/${category}`);
-            products = await res.json();
-            renderProducts();
-        }
-
-        // Render product buttons and price editors
-        function renderProducts() {
-            productsContainer.innerHTML = '';
-            products.forEach((product, idx) => {
-                // Track a temporary price (editable) to simulate original price editing frontend only
-                product.tempPrice = product.tempPrice ?? product.price;
-
-                const div = document.createElement('div');
-                div.className = 'product';
-                div.innerHTML = `
-                    <div><strong>${product.name}</strong></div>
-                    <div>₹<span class="price">${product.tempPrice.toFixed(2)}</span></div>
-                    <button class="add-to-cart-btn">Add to Cart</button>
-                    <button class="edit-price-btn">Edit Price</button>
-                `;
-
-                div.querySelector('.add-to-cart-btn').onclick = () => addToCart(product);
-                div.querySelector('.edit-price-btn').onclick = () => editPrice(product);
-
-                productsContainer.appendChild(div);
-            });
-        }
-
-        // Handler to add to cart or update quantity
-        function addToCart(product) {
-            if(cart[product.id]) {
-                cart[product.id].quantity++;
-            } else {
-                cart[product.id] = {
-                    ...product,
-                    quantity: 1,
-                };
-            }
-            updateCartUI();
-        }
-
-        // Edit price popup, only temp price changed locally
-        function editPrice(product) {
-            const newPrice = prompt(`Enter new price for ${product.name}:`, product.tempPrice.toFixed(2));
-            if(newPrice && !isNaN(newPrice) && parseFloat(newPrice) > 0) {
-                product.tempPrice = parseFloat(newPrice);
-                // Update product display
-                renderProducts();
-                updateCartUI();
-            }
-        }
-
-        // Remove product from cart
-        function removeFromCart(id) {
-            delete cart[id];
-            updateCartUI();
-        }
-
-        // Update cart totals & table UI
-        function updateCartUI() {
-            cartTableBody.innerHTML = '';
-            let grandTotal = 0;
-            Object.values(cart).forEach(item => {
-                const total = item.tempPrice * item.quantity;
-                grandTotal += total;
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${item.name}</td>
-                    <td>₹${item.tempPrice.toFixed(2)}</td>
-                    <td><input type="number" min="1" value="${item.quantity}" style="width: 50px;"></td>
-                    <td>₹${total.toFixed(2)}</td>
-                    <td><button class="remove-btn">X</button></td>
-                `;
-                // Quantity change handler
-                tr.querySelector('input').onchange = (e) => {
-                    const val = parseInt(e.target.value);
-                    if(val <= 0) removeFromCart(item.id);
-                    else {
-                        cart[item.id].quantity = val;
-                        updateCartUI();
-                    }
-                };
-                // Remove button handler
-                tr.querySelector('.remove-btn').onclick = () => removeFromCart(item.id);
-                cartTableBody.appendChild(tr);
-            });
-            grandTotalElem.textContent = `₹${grandTotal.toFixed(2)}`;
-        }
-
-        // Receipt generation using html2canvas
-        receiptBtn.onclick = () => {
-            html2canvas(document.querySelector('#cart')).then(canvas => {
-                const link = document.createElement('a');
-                link.download = `receipt-${Date.now()}.png`;
-                link.href = canvas.toDataURL();
-                link.click();
-            });
-        };
-
-        categories.forEach(button => {
-            button.addEventListener('click', () => loadProducts(button.dataset.category));
+      menuButtons.forEach(button => {
+        button.addEventListener('click', function () {
+          const category = this.dataset.category;
+          loadProducts(category);
         });
+      });
 
-        // Initial load Seeds by default
-        loadProducts('seeds');
-    </script>
+      // Replaced loadProducts to fetch from backend API instead of .txt file
+      function loadProducts(category) {
+        fetch(`/api/products/${category.toLowerCase()}`)
+          .then(response => response.json())
+          .then(products => {
+            productContainer.innerHTML = '';
+            products.forEach(product => {
+              addProductButton(product.name, product.price);
+            });
+          })
+          .catch(err => {
+            console.error('Failed to load products:', err);
+            productContainer.innerHTML = `<p class="text-white">Failed to load products.</p>`;
+          });
+      }
+
+      function addProductButton(name, price) {
+        const productWrapper = document.createElement('div');
+        productWrapper.className = 'flex flex-col gap-1 h-20';
+        
+        const productButton = document.createElement('button');
+        productButton.className = 'product-button text-white font-semibold py-1 px-2 rounded-lg flex items-center justify-center border border-white bg-transparent text-xs leading-tight h-12 overflow-hidden';
+        productButton.dataset.name = name;
+        productButton.dataset.price = price;
+        productButton.innerHTML = `<span class="text-center">${name} - ₹${price}</span>`;
+        productButton.addEventListener('click', function () {
+          const quantity = prompt('Enter quantity:');
+          if (quantity && !isNaN(quantity) && parseInt(quantity) > 0) {
+            const currentPrice = parseFloat(productButton.dataset.price);
+            cart[name] = {
+              price: currentPrice,
+              quantity: parseInt(quantity),
+              total: currentPrice * parseInt(quantity)
+            };
+            updateCart();
+          } else if (parseInt(quantity) === 0) {
+            delete cart[name];
+            updateCart();
+          }
+        });
+        
+        const editButton = document.createElement('button');
+        editButton.className = 'edit-price-btn text-white font-semibold py-1 px-2 rounded-lg border border-yellow-400 bg-yellow-600 hover:bg-yellow-700 text-xs';
+        editButton.innerHTML = 'Edit Price';
+        editButton.addEventListener('click', function (e) {
+          e.stopPropagation();
+          const newPrice = prompt(`Enter new price for ${name}:`, price);
+          if (newPrice && !isNaN(newPrice) && parseFloat(newPrice) > 0) {
+            const updatedPrice = parseFloat(newPrice);
+            productButton.dataset.price = updatedPrice;
+            productButton.innerHTML = `<span class="text-center">${name} - ₹${updatedPrice}</span>`;
+            
+            // Update cart if this item is already in cart
+            if (cart[name]) {
+              cart[name].price = updatedPrice;
+              cart[name].total = cart[name].quantity * updatedPrice;
+              updateCart();
+            }
+          }
+        });
+        
+        productWrapper.appendChild(productButton);
+        productWrapper.appendChild(editButton);
+        productContainer.appendChild(productWrapper);
+      }
+
+      function updateCart() {
+        let cartDetailsHTML = '';
+        let totalValue = 0;
+        for (const [productName, productDetails] of Object.entries(cart)) {
+          cartDetailsHTML += `<div>${productName} - ${productDetails.quantity} × ₹${productDetails.price} = ₹${productDetails.total}</div>`;
+          totalValue += productDetails.total;
+        }
+        cartDetailsElement.innerHTML = cartDetailsHTML;
+        cartValueElement.textContent = `Total Cart Value: ₹${totalValue}`;
+      }
+
+      placeOrderButton.addEventListener('click', function () {
+        const buyerName = prompt('Enter your name:');
+        if (!buyerName) return;
+
+        const cartBlockClone = document.createElement('div');
+        cartBlockClone.className = 'pattern-bg';
+        cartBlockClone.style.color = '#000000';
+        cartBlockClone.style.padding = '20px';
+        cartBlockClone.style.width = '300px';
+        cartBlockClone.style.border = '1px solid #000';
+
+        const titleElement = document.createElement('div');
+        titleElement.textContent = 'Gumasta Krishi Kendra';
+        titleElement.className = 'text-black text-center font-bold mb-4';
+
+        const buyerNameElement = document.createElement('div');
+        buyerNameElement.textContent = `Buyer: ${buyerName}`;
+        buyerNameElement.className = 'text-black mb-4';
+
+        const productsHeaderElement = document.createElement('div');
+        productsHeaderElement.textContent = 'Products:';
+        productsHeaderElement.className = 'text-black font-bold mb-2';
+
+        const cartDetailsClone = cartDetailsElement.cloneNode(true);
+        cartDetailsClone.className = 'text-black mb-4';
+
+        const totalAmountElement = document.createElement('div');
+        totalAmountElement.innerHTML = `<strong>${cartValueElement.textContent}</strong>`;
+        totalAmountElement.className = 'text-black mt-2';
+
+        const dateTimeElement = document.createElement('div');
+        const now = new Date();
+        const options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+        dateTimeElement.textContent = now.toLocaleDateString('en-IN', options);
+        dateTimeElement.className = 'text-black mt-4';
+
+        cartBlockClone.appendChild(titleElement);
+        cartBlockClone.appendChild(buyerNameElement);
+        cartBlockClone.appendChild(productsHeaderElement);
+        cartBlockClone.appendChild(cartDetailsClone);
+        cartBlockClone.appendChild(totalAmountElement);
+        cartBlockClone.appendChild(dateTimeElement);
+
+        document.body.appendChild(cartBlockClone);
+        html2canvas(cartBlockClone).then(canvas => {
+          const imgData = canvas.toDataURL('image/png');
+          const link = document.createElement('a');
+          link.href = imgData;
+          link.download = 'cart-details.png';
+          link.click();
+          document.body.removeChild(cartBlockClone);
+        });
+      });
+
+      clearCartButton.addEventListener('click', function () {
+        cart = {};
+        updateCart();
+      });
+
+      // Load default category (Seeds) on page load
+      loadProducts('Seeds');
+    });
+  </script>
+</head>
+<body class="p-4">
+  <div class="max-w-md mx-auto bg-transparent rounded-lg shadow-md overflow-hidden border border-gray-300 mb-4">
+    <div class="p-4 text-center">
+      <h1 class="text-2xl font-bold text-white white-border p-2 inline-block">
+        GUMASTA KRISHI KENDRA
+      </h1>
+    </div>
+    <div class="p-4">
+      <div class="grid grid-cols-2 gap-2 mb-4">
+        <button class="menu-button text-white font-semibold py-2 px-4 rounded-lg border border-white bg-transparent" data-category="Seeds">Seeds</button>
+        <button class="menu-button text-white font-semibold py-2 px-4 rounded-lg border border-white bg-transparent" data-category="Fertilizers">Fertilizers</button>
+        <button class="menu-button text-white font-semibold py-2 px-4 rounded-lg border border-white bg-transparent" data-category="Herbicides">Herbicides</button>
+        <button class="menu-button text-white font-semibold py-2 px-4 rounded-lg border border-white bg-transparent" data-category="Pesticides">Pesticides</button>
+      </div>
+      <p class="text-lg font-semibold text-center text-white">
+        Select a product to order:
+      </p>
+      <div id="product-container" class="grid grid-cols-2 gap-2 mt-4">
+        <!-- Product buttons will be added here -->
+      </div>
+    </div>
+  </div>
+  <div class="max-w-md mx-auto bg-transparent rounded-lg shadow-md overflow-hidden border border-gray-300" id="cart-block">
+    <div class="p-4">
+      <p class="text-lg font-semibold text-center text-white">
+        Cart Details:
+      </p>
+      <div class="mt-4 text-center text-white font-semibold" id="cart-details">
+      </div>
+      <div class="mt-4 text-center text-white font-semibold" id="cart-value">
+        Total Cart Value: ₹0
+      </div>
+      <div class="mt-4 flex justify-between">
+        <button class="product-button text-white font-semibold py-1 px-2 rounded-lg flex items-center justify-between border border-white bg-transparent" id="clear-cart-button">
+          Clear Cart
+        </button>
+        <button class="product-button text-white font-semibold py-1 px-2 rounded-lg flex items-center justify-between border border-white bg-transparent" id="place-order-button">
+          Place Your Order
+        </button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
