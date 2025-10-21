@@ -1,0 +1,17 @@
+{
+  "name": "gkkweb-fullstack",
+  "version": "1.0.0",
+  "description": "Full stack agricultural product management system",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "body-parser": "^1.20.3",
+    "cors": "^2.8.5",
+    "express": "^4.18.3",
+    "mysql2": "^3.10.0"
+  }
+}
